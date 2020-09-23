@@ -125,7 +125,27 @@ class SpiderIsland(arcade.Window):
             engine.update()
 
         for spider in self.spider_list:
-            follow(spider, self.player_sprite)
+            follow_sprite(spider, self.player_sprite)
+            
+            wall_hit_list = arcade.check_for_collision_with_list(spider, self.wall_list)
+
+            if len(wall_hit_list) > 0:
+                for wall in wall_hit_list:
+                    start_x = spider.center_x
+                    start_y = spider.center_y
+
+                    dest_x = wall.center_x
+                    dest_y = wall.top + 100
+
+                    x_diff = dest_x - start_x
+                    y_diff = dest_y - start_y
+                    angle = math.atan2(y_diff, x_diff)
+
+                    spider.change_x = math.cos(angle) * SPIDER_SPEED
+                    spider.change_y = math.sin(angle) * SPIDER_SPEED
+
+                    if spider.bottom > self.width or spider.top < 0 or spider.right < 0 or spider.left > self.width:
+                        spider.remove_from_sprite_lists()
 
         coin_hit_list = arcade.check_for_collision_with_list(self.player_sprite, self.coin_list)
 
@@ -161,6 +181,11 @@ class SpiderIsland(arcade.Window):
             # If bullet flies offscreen, remove it
             if bullet.bottom > self.width or bullet.top < 0 or bullet.right < 0 or bullet.left > self.width:
                 bullet.remove_from_sprite_lists()
+
+        if self.player_sprite.bottom > self.width or self.player_sprite.top < 0 or self.player_sprite.right < 0 or (
+                self.player_sprite.left > self.width
+        ):
+            self.setup()
 
         spider_hit_list = arcade.check_for_collision_with_list(self.player_sprite, self.spider_list)
 
@@ -220,25 +245,40 @@ class SpiderIsland(arcade.Window):
         self.bullet_list.append(bullet)
 
 
-def follow(first, second):
-    first.center_x += first.change_x
-    first.center_y += first.change_y
+def follow_sprite(self, player_sprite):
+    """
+        This function will move the current sprite towards whatever
+        other sprite is specified as a parameter.
+
+        We use the 'min' function here to get the sprite to line up with
+        the target sprite, and not jump around if the sprite is not off
+        an exact multiple of SPRITE_SPEED.
+        """
+
+    self.center_x += self.change_x
+    self.center_y += self.change_y
 
     # Random 1 in 100 chance that we'll change from our old direction and
     # then re-aim toward the player
     if random.randrange(100) == 0:
-        start_x = first.center_x
-        start_y = first.center_y
+        start_x = self.center_x
+        start_y = self.center_y
 
-        dest_x = second.center_x
-        dest_y = second.center_y
+        # Get the destination location for the bullet
+        dest_x = player_sprite.center_x
+        dest_y = player_sprite.center_y
 
+        # Do math to calculate how to get the bullet to the destination.
+        # Calculation the angle in radians between the start points
+        # and end points. This is the angle the bullet will travel.
         x_diff = dest_x - start_x
         y_diff = dest_y - start_y
         angle = math.atan2(y_diff, x_diff)
 
-        first.change_x = math.cos(angle) * SPIDER_SPEED
-        # first.change_y = math.sin(angle) * SPIDER_SPEED
+        # Taking into account the angle, calculate our change_x
+        # and change_y. Velocity is how fast the bullet travels.
+        self.change_x = math.cos(angle) * SPIDER_SPEED
+        # self.change_y = math.sin(angle) * SPIDER_SPEED
 
 
 def main():

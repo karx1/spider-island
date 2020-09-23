@@ -17,7 +17,7 @@
  </tileset>
  <layer id="2" name="Platforms" width="25" height="20">
   <data encoding="base64" compression="zlib">
-   eJxjYBgFo2AU4AJMdMCjYBQMRkCPtEmuHaToI1ctExJNyAxi7GCkAwYA/pQAXg==
+   eJxjYBgFo2AU4AJMdMCjYBSMAtIArfINExY2tfIpIx0wAPWkAFY=
   </data>
  </layer>
  <layer id="3" name="Coins" width="25" height="20">
