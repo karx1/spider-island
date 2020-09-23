@@ -10,13 +10,14 @@ SCREEN_TITLE = "Spider Island"
 
 # Sprite scaling
 
-PLAYER_SCALING = 0.4
+PLAYER_SCALING = 1
 COIN_SCALING = 0.0594
 TILE_SCALING = 0.5
 
 PLAYER_MOVEMENT_SPEED = 5
 GRAVITY = 1
 PLAYER_JUMP_SPEED = 20
+
 
 class SpiderIsland(arcade.Window):
     """
@@ -36,34 +37,52 @@ class SpiderIsland(arcade.Window):
 
     def setup(self):
         self.player_list = arcade.SpriteList()
-        self.coin_list = arcade.SpriteList(use_spatial_hash=True)
-        self.wall_list = arcade.SpriteList(use_spatial_hash=True)
+        # self.coin_list = arcade.SpriteList(use_spatial_hash=True)
+        # self.wall_list = arcade.SpriteList(use_spatial_hash=True)
 
         self.player_sprite = arcade.Sprite("assets/player.png", PLAYER_SCALING)
         self.player_sprite.center_x = 64
         self.player_sprite.center_y = 128
         self.player_list.append(self.player_sprite)
 
-        for x in range(0, 1250, 64):
-            wall = arcade.Sprite(":resources:images/tiles/grassMid.png", TILE_SCALING)
-            wall.center_x = x
-            wall.center_y = 32
-            self.wall_list.append(wall)
+        # for x in range(0, 1250, 64):
+        #     wall = arcade.Sprite(":resources:images/tiles/grassMid.png", TILE_SCALING)
+        #     wall.center_x = x
+        #     wall.center_y = 32
+        #     self.wall_list.append(wall)
+        #
+        # coordinate_list = [[512, 96],
+        #                    [256, 96],
+        #                    [768, 96]]
+        #
+        # for coordinate in coordinate_list:
+        #     wall = arcade.Sprite(":resources:images/tiles/boxCrate_double.png", TILE_SCALING)
+        #     wall.position = coordinate
+        #     self.wall_list.append(wall)
+        #
+        # for x in range(128, 1250, 256):
+        #     coin = arcade.Sprite("assets/coin.png", COIN_SCALING)
+        #     coin.center_x = x
+        #     coin.center_y = 96
+        #     self.coin_list.append(coin)
 
-        coordinate_list = [[512, 96],
-                           [256, 96],
-                           [768, 96]]
+        map_name = "maps/map.tmx"
+        # Name of the layer in the file that has our platforms/walls
+        platforms_layer_name = 'Platforms'
+        # Name of the layer that has items for pick-up
+        coins_layer_name = 'Coins'
 
-        for coordinate in coordinate_list:
-            wall = arcade.Sprite(":resources:images/tiles/boxCrate_double.png", TILE_SCALING)
-            wall.position = coordinate
-            self.wall_list.append(wall)
+        # Read in the tiled map
+        my_map = arcade.tilemap.read_tmx(map_name)
 
-        for x in range(128, 1250, 256):
-            coin = arcade.Sprite("assets/coin.png", COIN_SCALING)
-            coin.center_x = x
-            coin.center_y = 96
-            self.coin_list.append(coin)
+        self.wall_list = arcade.tilemap.process_layer(map_object=my_map,
+                                                      layer_name=platforms_layer_name,
+                                                      scaling=TILE_SCALING,
+                                                      use_spatial_hash=True)
+
+        # -- Coins
+        self.coin_list = arcade.tilemap.process_layer(my_map, coins_layer_name, TILE_SCALING)
+
 
         self.engine = arcade.PhysicsEnginePlatformer(self.player_sprite, self.wall_list, GRAVITY)
 
