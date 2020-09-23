@@ -11,7 +11,7 @@ SCREEN_TITLE = "Spider Island"
 # Sprite scaling
 
 PLAYER_SCALING = 0.4
-COIN_SCALING = 0.6
+COIN_SCALING = 0.0594
 TILE_SCALING = 0.5
 
 PLAYER_MOVEMENT_SPEED = 5
@@ -32,6 +32,7 @@ class SpiderIsland(arcade.Window):
         self.wall_list = None
 
         self.player_sprite = None
+        self.engine = None
 
     def setup(self):
         self.player_list = arcade.SpriteList()
@@ -58,6 +59,14 @@ class SpiderIsland(arcade.Window):
             wall.position = coordinate
             self.wall_list.append(wall)
 
+        for x in range(128, 1250, 256):
+            coin = arcade.Sprite("assets/coin.png", COIN_SCALING)
+            coin.center_x = x
+            coin.center_y = 96
+            self.coin_list.append(coin)
+
+        self.engine = arcade.PhysicsEnginePlatformer(self.player_sprite, self.wall_list, GRAVITY)
+
     def on_draw(self):
         arcade.start_render()
 
@@ -67,11 +76,20 @@ class SpiderIsland(arcade.Window):
         self.coin_list.draw()
         self.player_list.draw()
 
+    def on_update(self, delta_time):
+        self.engine.update()
+
+        coin_hit_list = arcade.check_for_collision_with_list(self.player_sprite, self.coin_list)
+
+        for coin in coin_hit_list:
+            coin.remove_from_sprite_lists()
+
     def on_key_press(self, key, modifiers):
         """Called whenever a key is pressed. """
 
         if key == arcade.key.UP or key == arcade.key.W:
-            self.player_sprite.change_y = PLAYER_MOVEMENT_SPEED
+            if self.engine.can_jump():
+                self.player_sprite.change_y = PLAYER_JUMP_SPEED
         elif key == arcade.key.DOWN or key == arcade.key.S:
             self.player_sprite.change_y = -PLAYER_MOVEMENT_SPEED
         elif key == arcade.key.LEFT or key == arcade.key.A:
