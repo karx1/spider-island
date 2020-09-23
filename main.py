@@ -1,6 +1,8 @@
 """
 Spider Island
 """
+import random
+
 import arcade
 import math
 
@@ -20,6 +22,8 @@ PLAYER_MOVEMENT_SPEED = 5
 GRAVITY = 1
 PLAYER_JUMP_SPEED = 20
 BULLET_SPEED = 7
+SPIDER_SPEED = 2
+SPIDER_CLIMB_SPEED = 1
 
 
 class SpiderIsland(arcade.Window):
@@ -39,6 +43,7 @@ class SpiderIsland(arcade.Window):
 
         self.player_sprite = None
         self.engine = None
+        self.spider_engines = None
 
         self.score = 0
         self.score_text = None
@@ -95,6 +100,10 @@ class SpiderIsland(arcade.Window):
         self.spider_list = arcade.tilemap.process_layer(my_map, "Spiders", TILE_SCALING)
 
         self.engine = arcade.PhysicsEnginePlatformer(self.player_sprite, self.wall_list, GRAVITY)
+        self.spider_engines = []
+        for spider in self.spider_list:
+            engine = arcade.PhysicsEnginePlatformer(spider, self.wall_list, GRAVITY)
+            self.spider_engines.append(engine)
 
     def on_draw(self):
         arcade.start_render()
@@ -112,6 +121,11 @@ class SpiderIsland(arcade.Window):
 
     def on_update(self, delta_time):
         self.engine.update()
+        for engine in self.spider_engines:
+            engine.update()
+
+        for spider in self.spider_list:
+            follow(spider, self.player_sprite)
 
         coin_hit_list = arcade.check_for_collision_with_list(self.player_sprite, self.coin_list)
 
@@ -147,6 +161,11 @@ class SpiderIsland(arcade.Window):
             # If bullet flies offscreen, remove it
             if bullet.bottom > self.width or bullet.top < 0 or bullet.right < 0 or bullet.left > self.width:
                 bullet.remove_from_sprite_lists()
+
+        spider_hit_list = arcade.check_for_collision_with_list(self.player_sprite, self.spider_list)
+
+        if len(spider_hit_list) > 0:
+            self.setup()
 
         if len(self.spider_list) == 0 and len(self.coin_list) == 0:
             self.setup(self.score)
@@ -194,11 +213,32 @@ class SpiderIsland(arcade.Window):
         y_diff = dest_y - start_y
         angle = math.atan2(y_diff, x_diff)
 
-        # Bullet valocity calculation
+        # Bullet velocity calculation
         bullet.change_x = math.cos(angle) * BULLET_SPEED
         bullet.change_y = math.sin(angle) * BULLET_SPEED
 
         self.bullet_list.append(bullet)
+
+
+def follow(first, second):
+    first.center_x += first.change_x
+    first.center_y += first.change_y
+
+    # Random 1 in 100 chance that we'll change from our old direction and
+    # then re-aim toward the player
+    if random.randrange(100) == 0:
+        start_x = first.center_x
+        start_y = first.center_y
+
+        dest_x = second.center_x
+        dest_y = second.center_y
+
+        x_diff = dest_x - start_x
+        y_diff = dest_y - start_y
+        angle = math.atan2(y_diff, x_diff)
+
+        first.change_x = math.cos(angle) * SPIDER_SPEED
+        # first.change_y = math.sin(angle) * SPIDER_SPEED
 
 
 def main():
