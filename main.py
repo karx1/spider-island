@@ -19,7 +19,7 @@ BULLET_SCALING = 0.5
 PLAYER_MOVEMENT_SPEED = 5
 GRAVITY = 1
 PLAYER_JUMP_SPEED = 20
-BULLET_SPEED = 3.5
+BULLET_SPEED = 7
 
 
 class SpiderIsland(arcade.Window):
@@ -43,10 +43,10 @@ class SpiderIsland(arcade.Window):
         self.score = 0
         self.score_text = None
 
-    def setup(self):
+    def setup(self, score=None):
+        self.score = score or 0
         self.player_list = arcade.SpriteList()
         self.bullet_list = arcade.SpriteList()
-        self.score = 0
         # self.coin_list = arcade.SpriteList(use_spatial_hash=True)
         # self.wall_list = arcade.SpriteList(use_spatial_hash=True)
 
@@ -116,6 +116,7 @@ class SpiderIsland(arcade.Window):
         coin_hit_list = arcade.check_for_collision_with_list(self.player_sprite, self.coin_list)
 
         for coin in coin_hit_list:
+            self.score += 1
             coin.remove_from_sprite_lists()
 
         self.bullet_list.update()
@@ -124,6 +125,7 @@ class SpiderIsland(arcade.Window):
             # Get bullet collisions
             bullet_hit_list = arcade.check_for_collision_with_list(bullet, self.spider_list)
             wall_hit_list = arcade.check_for_collision_with_list(bullet, self.wall_list)
+            coin_hit_list = arcade.check_for_collision_with_list(bullet, self.coin_list)
 
             if len(wall_hit_list) > 0:
                 bullet.remove_from_sprite_lists()
@@ -131,13 +133,23 @@ class SpiderIsland(arcade.Window):
             if len(bullet_hit_list) > 0:
                 bullet.remove_from_sprite_lists()
 
+            if len(coin_hit_list) > 0:
+                bullet.remove_from_sprite_lists()
+
             for spider in bullet_hit_list:
                 spider.remove_from_sprite_lists()
+                self.score += 1
+
+            for coin in coin_hit_list:
+                coin.remove_from_sprite_lists()
                 self.score += 1
 
             # If bullet flies offscreen, remove it
             if bullet.bottom > self.width or bullet.top < 0 or bullet.right < 0 or bullet.left > self.width:
                 bullet.remove_from_sprite_lists()
+
+        if len(self.spider_list) == 0 and len(self.coin_list) == 0:
+            self.setup(self.score)
 
     def on_key_press(self, key, modifiers):
         """Called whenever a key is pressed. """
