@@ -2,6 +2,7 @@
 Spider Island
 """
 import arcade
+import math
 
 # Window constants
 SCREEN_WIDTH = 1000
@@ -13,10 +14,12 @@ SCREEN_TITLE = "Spider Island"
 PLAYER_SCALING = 1
 COIN_SCALING = 0.0594
 TILE_SCALING = 0.5
+BULLET_SCALING = 0.5
 
 PLAYER_MOVEMENT_SPEED = 5
 GRAVITY = 1
 PLAYER_JUMP_SPEED = 20
+BULLET_SPEED = 3.5
 
 
 class SpiderIsland(arcade.Window):
@@ -31,12 +34,19 @@ class SpiderIsland(arcade.Window):
         self.coin_list = None
         self.player_list = None
         self.wall_list = None
+        self.bullet_list = None
+        self.spider_list = None
 
         self.player_sprite = None
         self.engine = None
 
+        self.score = 0
+        self.score_text = None
+
     def setup(self):
         self.player_list = arcade.SpriteList()
+        self.bullet_list = arcade.SpriteList()
+        self.score = 0
         # self.coin_list = arcade.SpriteList(use_spatial_hash=True)
         # self.wall_list = arcade.SpriteList(use_spatial_hash=True)
 
@@ -81,7 +91,8 @@ class SpiderIsland(arcade.Window):
                                                       use_spatial_hash=True)
 
         # -- Coins
-        self.coin_list = arcade.tilemap.process_layer(my_map, coins_layer_name, TILE_SCALING)
+        self.coin_list = arcade.tilemap.process_layer(my_map, coins_layer_name, TILE_SCALING, use_spatial_hash=True)
+        self.spider_list = arcade.tilemap.process_layer(my_map, "Spiders", TILE_SCALING)
 
         self.engine = arcade.PhysicsEnginePlatformer(self.player_sprite, self.wall_list, GRAVITY)
 
@@ -92,7 +103,12 @@ class SpiderIsland(arcade.Window):
 
         self.wall_list.draw()
         self.coin_list.draw()
+        self.spider_list.draw()
+        self.bullet_list.draw()
         self.player_list.draw()
+
+        output = f"Score: {self.score}"
+        arcade.draw_text(output, 10, 20, arcade.color.WHITE, 14)
 
     def on_update(self, delta_time):
         self.engine.update()
@@ -101,6 +117,27 @@ class SpiderIsland(arcade.Window):
 
         for coin in coin_hit_list:
             coin.remove_from_sprite_lists()
+
+        self.bullet_list.update()
+
+        for bullet in self.bullet_list:
+            # Get bullet collisions
+            bullet_hit_list = arcade.check_for_collision_with_list(bullet, self.spider_list)
+            wall_hit_list = arcade.check_for_collision_with_list(bullet, self.wall_list)
+
+            if len(wall_hit_list) > 0:
+                bullet.remove_from_sprite_lists()
+
+            if len(bullet_hit_list) > 0:
+                bullet.remove_from_sprite_lists()
+
+            for spider in bullet_hit_list:
+                spider.remove_from_sprite_lists()
+                self.score += 1
+
+            # If bullet flies offscreen, remove it
+            if bullet.bottom > self.width or bullet.top < 0 or bullet.right < 0 or bullet.left > self.width:
+                bullet.remove_from_sprite_lists()
 
     def on_key_press(self, key, modifiers):
         """Called whenever a key is pressed. """
@@ -128,6 +165,28 @@ class SpiderIsland(arcade.Window):
             self.player_sprite.change_x = 0
         elif key == arcade.key.RIGHT or key == arcade.key.D:
             self.player_sprite.change_x = 0
+
+    def on_mouse_press(self, x: float, y: float, button: int, modifiers: int):
+        bullet = arcade.Sprite("assets/laser.png", BULLET_SCALING)
+
+        start_x = self.player_sprite.center_x
+        start_y = self.player_sprite.center_y
+        bullet.center_x = start_x
+        bullet.center_y = start_y
+
+        dest_x = x
+        dest_y = y
+
+        # Bullet trajectory calculation
+        x_diff = dest_x - start_x
+        y_diff = dest_y - start_y
+        angle = math.atan2(y_diff, x_diff)
+
+        # Bullet valocity calculation
+        bullet.change_x = math.cos(angle) * BULLET_SPEED
+        bullet.change_y = math.sin(angle) * BULLET_SPEED
+
+        self.bullet_list.append(bullet)
 
 
 def main():
