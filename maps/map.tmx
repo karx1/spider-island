@@ -3,13 +3,13 @@
  <tileset firstgid="1" name="tiles" tilewidth="128" tileheight="128" tilecount="4" columns="0">
   <grid orientation="orthogonal" width="1" height="1"/>
   <tile id="0">
-   <image width="128" height="128" source="../assets/grassMid.png"/>
+   <image width="128" height="128" source="../assets/grass.png"/>
   </tile>
   <tile id="1">
-   <image width="128" height="128" source="../assets/boxCrate_double.png"/>
+   <image width="128" height="128" source="../assets/box.png"/>
   </tile>
   <tile id="3">
-   <image width="128" height="128" source="../assets/coin.png"/>
+   <image width="128" height="128" source="../assets/ruby.png"/>
   </tile>
   <tile id="4">
    <image width="128" height="128" source="../assets/spider.png"/>
@@ -17,7 +17,7 @@
  </tileset>
  <layer id="2" name="Platforms" width="25" height="20">
   <data encoding="base64" compression="zlib">
-   eJxjYBgFo2AU4AJMdMCjYBSMAtIArfINExY2tfIpIx0wAPWkAFY=
+   eJxjYBgFo2AU4AJMdMCjYBQMRkCPtEmuHaToI1ctExJNyAxi7GCkAwYA/pQAXg==
   </data>
  </layer>
  <layer id="3" name="Coins" width="25" height="20">
