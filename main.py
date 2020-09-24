@@ -349,6 +349,11 @@ def follow_sprite(self, player_sprite):
         y_diff = dest_y - start_y
         angle = math.atan2(y_diff, x_diff)
 
+        if x_diff > 0:
+            self.texture = arcade.load_texture("assets/spider.png", flipped_horizontally=True)
+        else:
+            self.texture = arcade.load_texture("assets/spider.png")
+
         # Taking into account the angle, calculate our change_x
         # and change_y. Velocity is how fast the bullet travels.
         self.change_x = math.cos(angle) * SPIDER_SPEED
