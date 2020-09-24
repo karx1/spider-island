@@ -18,12 +18,84 @@ COIN_SCALING = 0.0594
 TILE_SCALING = 0.5
 BULLET_SCALING = 0.5
 
-PLAYER_MOVEMENT_SPEED = 5
+PLAYER_MOVEMENT_SPEED = 2
 GRAVITY = 1
-PLAYER_JUMP_SPEED = 20
+PLAYER_JUMP_SPEED = 12.5
 BULLET_SPEED = 7
 SPIDER_SPEED = 2
 SPIDER_CLIMB_SPEED = 1
+
+UPDATES_PER_FRAME = 7
+LEFT_FACING = 1
+RIGHT_FACING = 0
+
+def load_texture_pair(filename):
+    return [
+            arcade.load_texture(filename),
+            arcade.load_texture(filename, flipped_horizontally=True)
+    ]
+
+class PlayerCharacter(arcade.Sprite):
+    def __init__(self):
+
+        # Set up parent class
+        super().__init__()
+
+        # Default to face-right
+        self.character_face_direction = RIGHT_FACING
+
+        # Used for flipping between image sequences
+        self.cur_texture = 0
+
+        # Track out state
+        self.jumping = False
+        self.climbing = False
+        self.is_on_ladder = False
+        self.scale = PLAYER_SCALING
+        self.texture = arcade.load_texture("assets/player_idle.png")
+
+        # Adjust the collision box. Default includes too much empty space
+        # side-to-side. Box is centered at sprite center, (0, 0)
+        self.points = self.get_adjusted_hit_box()
+
+        # --- Load Textures ---
+
+        # Images from Kenney.nl's Asset Pack 3
+        main_path = "assets/player"
+        # main_path = ":resources:images/animated_characters/female_person/femalePerson"
+        # main_path = ":resources:images/animated_characters/male_person/malePerson"
+        # main_path = ":resources:images/animated_characters/male_adventurer/maleAdventurer"
+        # main_path = ":resources:images/animated_characters/zombie/zombie"
+        # main_path = ":resources:images/animated_characters/robot/robot"
+
+        # Load textures for idle standing
+        self.idle_texture_pair = load_texture_pair(f"{main_path}_idle.png")
+
+        # Load textures for walking
+        self.walk_textures = []
+        for i in range(5):
+            texture = load_texture_pair(f"{main_path}_walk_{i}.png")
+            self.walk_textures.append(texture)
+
+    def update_animation(self, delta_time: float = 1/60):
+
+        # Figure out if we need to flip face left or right
+        if self.change_x < 0 and self.character_face_direction == RIGHT_FACING:
+            self.character_face_direction = LEFT_FACING
+        elif self.change_x > 0 and self.character_face_direction == LEFT_FACING:
+            self.character_face_direction = RIGHT_FACING
+
+        # Idle animation
+        if self.change_x == 0 and self.change_y == 0:
+            self.texture = self.idle_texture_pair[self.character_face_direction]
+            return
+
+        # Walking animation
+        self.cur_texture += 1
+        if self.cur_texture > 4 * UPDATES_PER_FRAME:
+            self.cur_texture = 0
+        self.texture = self.walk_textures[self.cur_texture // UPDATES_PER_FRAME][self.character_face_direction]
+
 
 
 class SpiderIsland(arcade.Window):
@@ -55,7 +127,7 @@ class SpiderIsland(arcade.Window):
         # self.coin_list = arcade.SpriteList(use_spatial_hash=True)
         # self.wall_list = arcade.SpriteList(use_spatial_hash=True)
 
-        self.player_sprite = arcade.Sprite("assets/player.png", PLAYER_SCALING)
+        self.player_sprite = PlayerCharacter()
         self.player_sprite.center_x = 64
         self.player_sprite.center_y = 128
         self.player_list.append(self.player_sprite)
@@ -120,6 +192,8 @@ class SpiderIsland(arcade.Window):
         arcade.draw_text(output, 10, 20, arcade.color.WHITE, 14)
 
     def on_update(self, delta_time):
+        self.player_list.update()
+        self.player_list.update_animation()
         self.engine.update()
         for engine in self.spider_engines:
             engine.update()
@@ -204,10 +278,10 @@ class SpiderIsland(arcade.Window):
         elif key == arcade.key.DOWN or key == arcade.key.S:
             self.player_sprite.change_y = -PLAYER_MOVEMENT_SPEED
         elif key == arcade.key.LEFT or key == arcade.key.A:
-            self.player_sprite.texture = arcade.load_texture("assets/player-flipped.png")
+            # self.player_sprite.texture = arcade.load_texture("assets/player.png", flipped_horizontally=True)
             self.player_sprite.change_x = -PLAYER_MOVEMENT_SPEED
         elif key == arcade.key.RIGHT or key == arcade.key.D:
-            self.player_sprite.texture = arcade.load_texture("assets/player.png")
+            # self.player_sprite.texture = arcade.load_texture("assets/player.png")
             self.player_sprite.change_x = PLAYER_MOVEMENT_SPEED
 
     def on_key_release(self, key, modifiers):
