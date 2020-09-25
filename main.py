@@ -2,6 +2,7 @@
 Spider Island
 """
 import random
+import os
 
 import arcade
 import math
@@ -18,10 +19,21 @@ COIN_SCALING = 0.0594
 TILE_SCALING = 0.5
 BULLET_SCALING = 0.5
 
-PLAYER_MOVEMENT_SPEED = 2
+NORMAL_SPEED = 2
+WATER_SPEED = 1
+
+PLAYER_MOVEMENT_SPEED = NORMAL_SPEED
 GRAVITY = 1
-PLAYER_JUMP_SPEED = 12.5
-BULLET_SPEED = 7
+
+NORMAL_JUMP_SPEED = 12.5
+WATER_JUMP_SPEED = 6.25
+
+PLAYER_JUMP_SPEED = NORMAL_JUMP_SPEED
+
+NORMAL_BULLET_SPEED = 7
+WATER_BULLET_SPEED = 3.5
+
+BULLET_SPEED = NORMAL_BULLET_SPEED
 SPIDER_SPEED = 2
 SPIDER_CLIMB_SPEED = 1
 
@@ -29,11 +41,13 @@ UPDATES_PER_FRAME = 7
 LEFT_FACING = 1
 RIGHT_FACING = 0
 
+
 def load_texture_pair(filename):
     return [
-            arcade.load_texture(filename),
-            arcade.load_texture(filename, flipped_horizontally=True)
+        arcade.load_texture(filename),
+        arcade.load_texture(filename, flipped_horizontally=True)
     ]
+
 
 class PlayerCharacter(arcade.Sprite):
     def __init__(self):
@@ -77,7 +91,7 @@ class PlayerCharacter(arcade.Sprite):
             texture = load_texture_pair(f"{main_path}_walk_{i}.png")
             self.walk_textures.append(texture)
 
-    def update_animation(self, delta_time: float = 1/60):
+    def update_animation(self, delta_time: float = 1 / 60):
 
         # Figure out if we need to flip face left or right
         if self.change_x < 0 and self.character_face_direction == RIGHT_FACING:
@@ -97,7 +111,6 @@ class PlayerCharacter(arcade.Sprite):
         self.texture = self.walk_textures[self.cur_texture // UPDATES_PER_FRAME][self.character_face_direction]
 
 
-
 class SpiderIsland(arcade.Window):
     """
     Main game class
@@ -106,12 +119,19 @@ class SpiderIsland(arcade.Window):
     def __init__(self):
         super().__init__(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
 
+        self.jump_needs_reset = False
+        self.up_pressed = False
+        self.down_pressed = False
+        self.left_pressed = False
+        self.right_pressed = False
         arcade.set_background_color(arcade.csscolor.CORNFLOWER_BLUE)
         self.coin_list = None
         self.player_list = None
         self.wall_list = None
         self.bullet_list = None
         self.spider_list = None
+        self.ladder_list = None
+        self.water_list = None
 
         self.player_sprite = None
         self.engine = None
@@ -120,7 +140,9 @@ class SpiderIsland(arcade.Window):
         self.score = 0
         self.score_text = None
 
-    def setup(self, score=None):
+        self.level = 1
+
+    def setup(self, level, score=None):
         self.score = score or 0
         self.player_list = arcade.SpriteList()
         self.bullet_list = arcade.SpriteList()
@@ -153,11 +175,23 @@ class SpiderIsland(arcade.Window):
         #     coin.center_y = 96
         #     self.coin_list.append(coin)
 
-        map_name = "maps/map.tmx"
+        # Check if the game is over
+        num_maps = len(os.listdir("maps"))
+        if level > num_maps:
+            self.level = 1
+            self.setup(self.level, self.score)
+            return
+
+        map_name = f"maps/map_level_{level}.tmx"
         # Name of the layer in the file that has our platforms/walls
-        platforms_layer_name = 'Platforms'
+        platforms_layer_name = "Platforms"
         # Name of the layer that has items for pick-up
-        coins_layer_name = 'Coins'
+        coins_layer_name = "Coins"
+        # Name of the layer that contains enemies
+        spiders_layer_name = "Spiders"
+        # Name of the layer that contains ladders
+        ladders_layer_name = "Ladders"
+        water_layer_name = "Water"
 
         # Read in the tiled map
         my_map = arcade.tilemap.read_tmx(map_name)
@@ -167,11 +201,16 @@ class SpiderIsland(arcade.Window):
                                                       scaling=TILE_SCALING,
                                                       use_spatial_hash=True)
 
-        # -- Coins
         self.coin_list = arcade.tilemap.process_layer(my_map, coins_layer_name, TILE_SCALING, use_spatial_hash=True)
-        self.spider_list = arcade.tilemap.process_layer(my_map, "Spiders", TILE_SCALING)
+        self.spider_list = arcade.tilemap.process_layer(my_map, spiders_layer_name, TILE_SCALING)
+        self.ladder_list = arcade.tilemap.process_layer(my_map, ladders_layer_name, TILE_SCALING, use_spatial_hash=True)
+        self.ladder_list = arcade.tilemap.process_layer(my_map, ladders_layer_name, TILE_SCALING, use_spatial_hash=True)
+        self.water_list = arcade.tilemap.process_layer(my_map, water_layer_name, TILE_SCALING, use_spatial_hash=True)
 
-        self.engine = arcade.PhysicsEnginePlatformer(self.player_sprite, self.wall_list, GRAVITY)
+        self.engine = arcade.PhysicsEnginePlatformer(self.player_sprite,
+                                                     self.wall_list,
+                                                     GRAVITY,
+                                                     ladders=self.ladder_list)
         self.spider_engines = []
         for spider in self.spider_list:
             engine = arcade.PhysicsEnginePlatformer(spider, self.wall_list, GRAVITY)
@@ -181,9 +220,10 @@ class SpiderIsland(arcade.Window):
         arcade.start_render()
 
         # Render sprites
-
+        self.water_list.draw()
         self.wall_list.draw()
         self.coin_list.draw()
+        self.ladder_list.draw()
         self.spider_list.draw()
         self.bullet_list.draw()
         self.player_list.draw()
@@ -198,9 +238,21 @@ class SpiderIsland(arcade.Window):
         for engine in self.spider_engines:
             engine.update()
 
+        water_hit_list = arcade.check_for_collision_with_list(self.player_sprite, self.water_list)
+        global PLAYER_MOVEMENT_SPEED, BULLET_SPEED, PLAYER_JUMP_SPEED
+
+        if len(water_hit_list) > 0:
+            PLAYER_MOVEMENT_SPEED = WATER_SPEED
+            BULLET_SPEED = WATER_BULLET_SPEED
+            PLAYER_JUMP_SPEED = WATER_JUMP_SPEED
+        else:
+            PLAYER_MOVEMENT_SPEED = NORMAL_SPEED
+            BULLET_SPEED = NORMAL_BULLET_SPEED
+            PLAYER_JUMP_SPEED = NORMAL_JUMP_SPEED
+
         for spider in self.spider_list:
             follow_sprite(spider, self.player_sprite)
-            
+
             wall_hit_list = arcade.check_for_collision_with_list(spider, self.wall_list)
 
             if len(wall_hit_list) > 0:
@@ -218,8 +270,10 @@ class SpiderIsland(arcade.Window):
                     spider.change_x = math.cos(angle) * SPIDER_SPEED
                     spider.change_y = math.sin(angle) * SPIDER_SPEED
 
-                    if spider.bottom > self.width or spider.top < 0 or spider.right < 0 or spider.left > self.width:
-                        spider.remove_from_sprite_lists()
+            if spider.bottom > self.width or spider.top < 0 or spider.right < 0 or spider.left > self.width:
+                spider.remove_from_sprite_lists()
+            elif len(arcade.check_for_collision_with_list(spider, self.water_list)):
+                spider.remove_from_sprite_lists()
 
         coin_hit_list = arcade.check_for_collision_with_list(self.player_sprite, self.coin_list)
 
@@ -259,42 +313,77 @@ class SpiderIsland(arcade.Window):
         if self.player_sprite.bottom > self.width or self.player_sprite.top < 0 or self.player_sprite.right < 0 or (
                 self.player_sprite.left > self.width
         ):
-            self.setup()
+            self.level = 1
+            self.setup(self.level)
 
         spider_hit_list = arcade.check_for_collision_with_list(self.player_sprite, self.spider_list)
 
         if len(spider_hit_list) > 0:
-            self.setup()
+            self.level = 1
+            self.setup(self.level)
 
         if len(self.spider_list) == 0 and len(self.coin_list) == 0:
-            self.setup(self.score)
+            self.level += 1
+            self.setup(self.level, self.score)
+
+    def process_keychange(self):
+        """
+        Called when we change a key up/down or we move on/off a ladder.
+        """
+        # Process up/down
+        if self.up_pressed and not self.down_pressed:
+            if self.engine.is_on_ladder():
+                self.player_sprite.change_y = PLAYER_MOVEMENT_SPEED
+            elif self.engine.can_jump() and not self.jump_needs_reset:
+                self.player_sprite.change_y = PLAYER_JUMP_SPEED
+                self.jump_needs_reset = True
+        elif self.down_pressed and not self.up_pressed:
+            if self.engine.is_on_ladder():
+                self.player_sprite.change_y = -PLAYER_MOVEMENT_SPEED
+
+        # Process up/down when on a ladder and no movement
+        if self.engine.is_on_ladder():
+            if not self.up_pressed and not self.down_pressed:
+                self.player_sprite.change_y = 0
+            elif self.up_pressed and self.down_pressed:
+                self.player_sprite.change_y = 0
+
+        # Process left/right
+        if self.right_pressed and not self.left_pressed:
+            self.player_sprite.change_x = PLAYER_MOVEMENT_SPEED
+        elif self.left_pressed and not self.right_pressed:
+            self.player_sprite.change_x = -PLAYER_MOVEMENT_SPEED
+        else:
+            self.player_sprite.change_x = 0
 
     def on_key_press(self, key, modifiers):
         """Called whenever a key is pressed. """
 
         if key == arcade.key.UP or key == arcade.key.W:
-            if self.engine.can_jump():
-                self.player_sprite.change_y = PLAYER_JUMP_SPEED
+            self.up_pressed = True
         elif key == arcade.key.DOWN or key == arcade.key.S:
-            self.player_sprite.change_y = -PLAYER_MOVEMENT_SPEED
+            self.down_pressed = True
         elif key == arcade.key.LEFT or key == arcade.key.A:
-            # self.player_sprite.texture = arcade.load_texture("assets/player.png", flipped_horizontally=True)
-            self.player_sprite.change_x = -PLAYER_MOVEMENT_SPEED
+            self.left_pressed = True
         elif key == arcade.key.RIGHT or key == arcade.key.D:
-            # self.player_sprite.texture = arcade.load_texture("assets/player.png")
-            self.player_sprite.change_x = PLAYER_MOVEMENT_SPEED
+            self.right_pressed = True
+
+        self.process_keychange()
 
     def on_key_release(self, key, modifiers):
         """Called when the user releases a key. """
 
         if key == arcade.key.UP or key == arcade.key.W:
-            self.player_sprite.change_y = 0
+            self.up_pressed = False
+            self.jump_needs_reset = False
         elif key == arcade.key.DOWN or key == arcade.key.S:
-            self.player_sprite.change_y = 0
+            self.down_pressed = False
         elif key == arcade.key.LEFT or key == arcade.key.A:
-            self.player_sprite.change_x = 0
+            self.left_pressed = False
         elif key == arcade.key.RIGHT or key == arcade.key.D:
-            self.player_sprite.change_x = 0
+            self.right_pressed = False
+
+        self.process_keychange()
 
     def on_mouse_press(self, x: float, y: float, button: int, modifiers: int):
         bullet = arcade.Sprite("assets/laser.png", BULLET_SCALING)
@@ -363,7 +452,7 @@ def follow_sprite(self, player_sprite):
 def main():
     """ Main method """
     window = SpiderIsland()
-    window.setup()
+    window.setup(window.level)
     arcade.run()
 
 
