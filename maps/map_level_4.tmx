@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.4" tiledversion="1.4.2" orientation="orthogonal" renderorder="right-down" width="16" height="11" tilewidth="128" tileheight="128" infinite="0" nextlayerid="7" nextobjectid="1">
+ <tileset firstgid="1" name="tiles" tilewidth="128" tileheight="128" tilecount="6" columns="0">
+  <grid orientation="orthogonal" width="1" height="1"/>
+  <tile id="1">
+   <image width="128" height="128" source="../assets/box.png"/>
+  </tile>
+  <tile id="3">
+   <image width="128" height="128" source="../assets/ruby.png"/>
+  </tile>
+  <tile id="4">
+   <image width="128" height="128" source="../assets/spider.png"/>
+  </tile>
+  <tile id="5">
+   <image width="128" height="128" source="../assets/water.png"/>
+  </tile>
+  <tile id="6">
+   <image width="128" height="128" source="../assets/grass.png"/>
+  </tile>
+  <tile id="7">
+   <image width="128" height="128" source="../assets/ladder.png"/>
+  </tile>
+ </tileset>
+ <layer id="2" name="Water" width="16" height="11">
+  <data encoding="base64" compression="zlib">
+   eJxjYBi+gI0AHtU/uPUTAwBvrwFR
+  </data>
+ </layer>
+ <layer id="1" name="Platforms" width="16" height="11">
+  <data encoding="base64" compression="zlib">
+   eJxjYBiegIlCNUxEmEFI/1C3nx762SnEADWYAJE=
+  </data>
+ </layer>
+ <layer id="5" name="Ladders" width="16" height="11">
+  <data encoding="base64" compression="zlib">
+   eJxjYBh8gINCNaP6h7Z+UgAAn8AAgQ==
+  </data>
+ </layer>
+ <layer id="3" name="Coins" width="16" height="11">
+  <data encoding="base64" compression="zlib">
+   eJxjYBi6gGWgHUAADHb30Rqw4MHUAgAaAAAl
+  </data>
+ </layer>
+ <layer id="6" name="Spiders" width="16" height="11">
+  <data encoding="base64" compression="zlib">
+   eJxjYBicgJVKakYB/QArA/3jBAAcEAAV
+  </data>
+ </layer>
+</map>
