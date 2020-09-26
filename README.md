@@ -1,6 +1,7 @@
 # Spider Island
 
-karx's entry for PyWeek 30. Tested on Python 3.8
+karx's entry for PyWeek 30. Tested on Python 3.8.5 in a normal python
+virtual environment on Arch Linux.
 
 ## Running
 
