@@ -111,13 +111,13 @@ class PlayerCharacter(arcade.Sprite):
         self.texture = self.walk_textures[self.cur_texture // UPDATES_PER_FRAME][self.character_face_direction]
 
 
-class SpiderIsland(arcade.Window):
+class SpiderIsland(arcade.View):
     """
     Main game class
     """
 
     def __init__(self):
-        super().__init__(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
+        super().__init__()
 
         self.jump_needs_reset = False
         self.up_pressed = False
@@ -178,8 +178,8 @@ class SpiderIsland(arcade.Window):
         # Check if the game is over
         num_maps = len(os.listdir("maps"))
         if level > num_maps:
-            self.level = 1
-            self.setup(self.level, self.score)
+            view = WinScreen()
+            self.window.show_view(view)
             return
 
         map_name = f"maps/map_level_{level}.tmx"
@@ -270,7 +270,7 @@ class SpiderIsland(arcade.Window):
                     spider.change_x = math.cos(angle) * SPIDER_SPEED
                     spider.change_y = math.sin(angle) * SPIDER_SPEED
 
-            if spider.bottom > self.width or spider.top < 0 or spider.right < 0 or spider.left > self.width:
+            if spider.bottom > self.window.width or spider.top < 0 or spider.right < 0 or spider.left > self.window.width:
                 spider.remove_from_sprite_lists()
             elif len(arcade.check_for_collision_with_list(spider, self.water_list)):
                 spider.remove_from_sprite_lists()
@@ -307,20 +307,20 @@ class SpiderIsland(arcade.Window):
                 self.score += 1
 
             # If bullet flies offscreen, remove it
-            if bullet.bottom > self.width or bullet.top < 0 or bullet.right < 0 or bullet.left > self.width:
+            if bullet.bottom > self.window.width or bullet.top < 0 or bullet.right < 0 or bullet.left > self.window.width:
                 bullet.remove_from_sprite_lists()
 
-        if self.player_sprite.bottom > self.width or self.player_sprite.top < 0 or self.player_sprite.right < 0 or (
-                self.player_sprite.left > self.width
+        if self.player_sprite.bottom > self.window.width or self.player_sprite.top < 0 or self.player_sprite.right < 0 or (
+                self.player_sprite.left > self.window.width
         ):
-            self.level = 1
-            self.setup(self.level)
+            view = GameOverScreen()
+            self.window.show_view(view)
 
         spider_hit_list = arcade.check_for_collision_with_list(self.player_sprite, self.spider_list)
 
         if len(spider_hit_list) > 0:
-            self.level = 1
-            self.setup(self.level)
+            view = GameOverScreen()
+            self.window.show_view(view)
 
         if len(self.spider_list) == 0 and len(self.coin_list) == 0:
             self.level += 1
@@ -449,10 +449,73 @@ def follow_sprite(self, player_sprite):
         # self.change_y = math.sin(angle) * SPIDER_SPEED
 
 
+def get_tip():
+    tips = [
+        "Spiders hate water!",
+        "Bullets are an excellent way to get coins!",
+        "Use your mouse to shoot at enemies and coins!",
+        "You move slower in water!"
+    ]
+    return random.choice(tips)
+
+
+class StartScreen(arcade.View):
+    def __init__(self,
+                 window: arcade.Window = None):
+        super().__init__(window)
+        self.tip = get_tip()
+
+    def on_show(self):
+        arcade.set_background_color(arcade.csscolor.CORNFLOWER_BLUE)
+
+    def on_draw(self):
+        arcade.start_render()
+        arcade.draw_text("Spider Island", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, arcade.color.WHITE, font_size=50, anchor_x="center")
+        arcade.draw_text("Click to start", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-75, arcade.color.WHITE, font_size=20, anchor_x="center")
+        arcade.draw_text(f"TIP: {self.tip}", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 100, arcade.color.WHITE, font_size=15, anchor_x="center")
+
+    def on_mouse_press(self, x: float, y: float, button: int, modifiers: int):
+        game_view = SpiderIsland()
+        game_view.setup(game_view.level)
+        self.window.show_view(game_view)
+
+
+class GameOverScreen(arcade.View):
+    def on_show(self):
+        arcade.set_background_color(arcade.csscolor.CORNFLOWER_BLUE)
+
+    def on_draw(self):
+        arcade.start_render()
+        arcade.draw_text("You died!", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, arcade.color.WHITE, font_size=50, anchor_x="center")
+        arcade.draw_text("Click to restart", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-75, arcade.color.WHITE, font_size=20, anchor_x="center")
+
+    def on_mouse_press(self, x: float, y: float, button: int, modifiers: int):
+        game_view = SpiderIsland()
+        game_view.setup(game_view.level)
+        self.window.show_view(game_view)
+
+
+class WinScreen(arcade.View):
+    def on_show(self):
+        arcade.set_background_color(arcade.csscolor.CORNFLOWER_BLUE)
+
+    def on_draw(self):
+        arcade.start_render()
+        arcade.draw_text("Congratulations!", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, arcade.color.WHITE, font_size=50, anchor_x="center")
+        arcade.draw_text("You killed all the spiders and made it to the rescue boat.", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-75, arcade.color.WHITE, font_size=20, anchor_x="center")
+        arcade.draw_text("Click to restart.", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-100, arcade.color.WHITE, font_size=15, anchor_x="center")
+
+    def on_mouse_press(self, x: float, y: float, button: int, modifiers: int):
+        game_view = SpiderIsland()
+        game_view.setup(game_view.level)
+        self.window.show_view(game_view)
+
+
 def main():
     """ Main method """
-    window = SpiderIsland()
-    window.setup(window.level)
+    window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
+    start_view = StartScreen()
+    window.show_view(start_view)
     arcade.run()
 
 
