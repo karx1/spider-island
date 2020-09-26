@@ -21,6 +21,7 @@ COIN_SCALING = 0.0594
 TILE_SCALING = 0.5
 BULLET_SCALING = 0.5
 
+# Speed
 NORMAL_SPEED = 2
 WATER_SPEED = 1
 
@@ -39,6 +40,7 @@ BULLET_SPEED = NORMAL_BULLET_SPEED
 SPIDER_SPEED = 2
 SPIDER_CLIMB_SPEED = 1
 
+# For walking animation
 UPDATES_PER_FRAME = 7
 LEFT_FACING = 1
 RIGHT_FACING = 0
@@ -53,17 +55,15 @@ def load_texture_pair(filename):
 
 class PlayerCharacter(arcade.Sprite):
     def __init__(self):
-
-        # Set up parent class
         super().__init__()
 
-        # Default to face-right
+        # Face right by default
         self.character_face_direction = RIGHT_FACING
 
-        # Used for flipping between image sequences
+        # Used for flipping between images
         self.cur_texture = 0
 
-        # Track out state
+        # Track our state
         self.jumping = False
         self.climbing = False
         self.is_on_ladder = False
@@ -114,12 +114,15 @@ class SpiderIsland(arcade.View):
     def __init__(self):
         super().__init__()
 
+        # Track our state
         self.jump_needs_reset = False
         self.up_pressed = False
         self.down_pressed = False
         self.left_pressed = False
         self.right_pressed = False
         arcade.set_background_color(arcade.csscolor.CORNFLOWER_BLUE)
+
+        # Create placeholder variables
         self.coin_list = None
         self.player_list = None
         self.wall_list = None
@@ -132,48 +135,28 @@ class SpiderIsland(arcade.View):
         self.engine = None
         self.spider_engines = None
 
+        # Set up score and level
         self.score = 0
         self.score_text = None
 
         self.level = 1
 
+        # Sounds
         self.bullet_sound = arcade.load_sound("sounds/laser.wav")
         self.coin_sound = arcade.load_sound("sounds/coin.wav")
         self.level_sound = arcade.load_sound("sounds/level.wav")
         self.jump_sound = arcade.load_sound("sounds/jump.wav")
 
     def setup(self, level, score=None):
+        # Gove placeholder variables values
         self.score = score or 0
         self.player_list = arcade.SpriteList()
         self.bullet_list = arcade.SpriteList()
-        # self.coin_list = arcade.SpriteList(use_spatial_hash=True)
-        # self.wall_list = arcade.SpriteList(use_spatial_hash=True)
 
         self.player_sprite = PlayerCharacter()
         self.player_sprite.center_x = 64
         self.player_sprite.center_y = 128
         self.player_list.append(self.player_sprite)
-
-        # for x in range(0, 1250, 64):
-        #     wall = arcade.Sprite(":resources:images/tiles/grassMid.png", TILE_SCALING)
-        #     wall.center_x = x
-        #     wall.center_y = 32
-        #     self.wall_list.append(wall)
-        #
-        # coordinate_list = [[512, 96],
-        #                    [256, 96],
-        #                    [768, 96]]
-        #
-        # for coordinate in coordinate_list:
-        #     wall = arcade.Sprite(":resources:images/tiles/boxCrate_double.png", TILE_SCALING)
-        #     wall.position = coordinate
-        #     self.wall_list.append(wall)
-        #
-        # for x in range(128, 1250, 256):
-        #     coin = arcade.Sprite("assets/coin.png", COIN_SCALING)
-        #     coin.center_x = x
-        #     coin.center_y = 96
-        #     self.coin_list.append(coin)
 
         # Check if the game is over
         num_maps = len(os.listdir("maps"))
@@ -182,6 +165,7 @@ class SpiderIsland(arcade.View):
             self.window.show_view(view)
             return
 
+        # Load and read our map file
         map_name = f"maps/map_level_{level}.tmx"
         # Name of the layer in the file that has our platforms/walls
         platforms_layer_name = "Platforms"
@@ -196,6 +180,7 @@ class SpiderIsland(arcade.View):
         # Read in the tiled map
         my_map = arcade.tilemap.read_tmx(map_name)
 
+        # Assign objects to lists as per the map
         self.wall_list = arcade.tilemap.process_layer(
             map_object=my_map,
             layer_name=platforms_layer_name,
@@ -219,6 +204,7 @@ class SpiderIsland(arcade.View):
             my_map, water_layer_name, TILE_SCALING, use_spatial_hash=True
         )
 
+        # Set up physics engines
         self.engine = arcade.PhysicsEnginePlatformer(
             self.player_sprite, self.wall_list, GRAVITY, ladders=self.ladder_list
         )
@@ -239,16 +225,19 @@ class SpiderIsland(arcade.View):
         self.bullet_list.draw()
         self.player_list.draw()
 
+        # Draw score text
         output = f"Score: {self.score}"
         arcade.draw_text(output, 10, 20, arcade.color.WHITE, 14)
 
     def on_update(self, delta_time):
+        # Update physics and animations
         self.player_list.update()
         self.player_list.update_animation()
         self.engine.update()
         for engine in self.spider_engines:
             engine.update()
 
+        # Check if we are in water
         water_hit_list = arcade.check_for_collision_with_list(
             self.player_sprite, self.water_list
         )
@@ -265,13 +254,16 @@ class SpiderIsland(arcade.View):
             PLAYER_JUMP_SPEED = NORMAL_JUMP_SPEED
             self.engine.gravity_constant = GRAVITY
 
+        # Check spider movement
         for spider in self.spider_list:
             follow_sprite(spider, self.player_sprite)
 
             wall_hit_list = arcade.check_for_collision_with_list(spider, self.wall_list)
 
+            # Are we touching a wall?
             if len(wall_hit_list) > 0:
                 for wall in wall_hit_list:
+                    # If so, climb the wall
                     start_x = spider.center_x
                     start_y = spider.center_y
 
@@ -285,6 +277,7 @@ class SpiderIsland(arcade.View):
                     spider.change_x = math.cos(angle) * SPIDER_SPEED
                     spider.change_y = math.sin(angle) * SPIDER_SPEED
 
+            # Remove the spider if it goes off the screen
             if (
                 spider.bottom > self.window.width
                 or spider.top < 0
@@ -295,6 +288,7 @@ class SpiderIsland(arcade.View):
             elif len(arcade.check_for_collision_with_list(spider, self.water_list)):
                 spider.remove_from_sprite_lists()
 
+        # Collect coins
         coin_hit_list = arcade.check_for_collision_with_list(
             self.player_sprite, self.coin_list
         )
@@ -304,8 +298,10 @@ class SpiderIsland(arcade.View):
             coin.remove_from_sprite_lists()
             arcade.play_sound(self.coin_sound, volume=0.25)
 
+        # Update bullet positions
         self.bullet_list.update()
 
+        # Check bullet collisions
         for bullet in self.bullet_list:
             # Get bullet collisions
             bullet_hit_list = arcade.check_for_collision_with_list(
@@ -341,6 +337,7 @@ class SpiderIsland(arcade.View):
             ):
                 bullet.remove_from_sprite_lists()
 
+        # If player goes off the screen, remove it and show the game over screen
         if (
             self.player_sprite.bottom > self.window.width
             or self.player_sprite.top < 0
@@ -350,6 +347,7 @@ class SpiderIsland(arcade.View):
             view = GameOverScreen()
             self.window.show_view(view)
 
+        # Did we touch a spider?
         spider_hit_list = arcade.check_for_collision_with_list(
             self.player_sprite, self.spider_list
         )
@@ -358,6 +356,7 @@ class SpiderIsland(arcade.View):
             view = GameOverScreen()
             self.window.show_view(view)
 
+        # If we win
         if len(self.spider_list) == 0 and len(self.coin_list) == 0:
             arcade.play_sound(self.level_sound, volume=0.25)
             self.level += 1
@@ -491,6 +490,7 @@ def follow_sprite(self, player_sprite):
 
 
 def get_tip():
+    # Get a random tip to show on the start screen
     tips = [
         "Spiders hate water!",
         "Bullets are an excellent way to get rubies!",
@@ -499,7 +499,7 @@ def get_tip():
     ]
     return random.choice(tips)
 
-
+# Various screens
 class StartScreen(arcade.View):
     def __init__(self, window: arcade.Window = None):
         super().__init__(window)
