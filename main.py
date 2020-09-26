@@ -519,7 +519,7 @@ class InstructionScreen(arcade.View):
         arcade.start_render()
         arcade.draw_text("Instructions", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, arcade.color.WHITE, font_size=50, anchor_x="center")
         arcade.draw_text("Use your mouse to aim and click to shoot a bullet!", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-75, arcade.color.WHITE, font_size=20, anchor_x="center")
-        arcade.draw_text("Once you kill all the spiders and collect all the rubies, you will proceed to the next level.", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-100, arcade.color.WHITE, font_size=15, anchor_x="center")
+        arcade.draw_text("Kill the spiders and collect the rubies.", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-100, arcade.color.WHITE, font_size=15, anchor_x="center")
 
     def on_mouse_press(self, x: float, y: float, button: int, modifiers: int):
         game_view = SpiderIsland()
