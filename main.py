@@ -454,7 +454,8 @@ def get_tip():
         "Spiders hate water!",
         "Bullets are an excellent way to get coins!",
         "Use your mouse to shoot at enemies and coins!",
-        "You move slower in water!"
+        "You move slower in water!",
+        "Spiders can't climb ladders!"
     ]
     return random.choice(tips)
 
@@ -475,9 +476,8 @@ class StartScreen(arcade.View):
         arcade.draw_text(f"TIP: {self.tip}", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 100, arcade.color.WHITE, font_size=15, anchor_x="center")
 
     def on_mouse_press(self, x: float, y: float, button: int, modifiers: int):
-        game_view = SpiderIsland()
-        game_view.setup(game_view.level)
-        self.window.show_view(game_view)
+        view = InstructionScreen()
+        self.window.show_view(view)
 
 
 class GameOverScreen(arcade.View):
@@ -504,6 +504,22 @@ class WinScreen(arcade.View):
         arcade.draw_text("Congratulations!", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, arcade.color.WHITE, font_size=50, anchor_x="center")
         arcade.draw_text("You killed all the spiders and made it to the rescue boat.", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-75, arcade.color.WHITE, font_size=20, anchor_x="center")
         arcade.draw_text("Click to restart.", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-100, arcade.color.WHITE, font_size=15, anchor_x="center")
+
+    def on_mouse_press(self, x: float, y: float, button: int, modifiers: int):
+        game_view = SpiderIsland()
+        game_view.setup(game_view.level)
+        self.window.show_view(game_view)
+
+
+class InstructionScreen(arcade.View):
+    def on_show(self):
+        arcade.set_background_color(arcade.csscolor.CORNFLOWER_BLUE)
+
+    def on_draw(self):
+        arcade.start_render()
+        arcade.draw_text("Instructions", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, arcade.color.WHITE, font_size=50, anchor_x="center")
+        arcade.draw_text("Use your mouse to aim and click to shoot a bullet!", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-75, arcade.color.WHITE, font_size=20, anchor_x="center")
+        arcade.draw_text("Once you kill all the spiders and collect all the rubies, you will proceed to the next level.", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-100, arcade.color.WHITE, font_size=15, anchor_x="center")
 
     def on_mouse_press(self, x: float, y: float, button: int, modifiers: int):
         game_view = SpiderIsland()
