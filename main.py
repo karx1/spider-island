@@ -45,7 +45,7 @@ RIGHT_FACING = 0
 def load_texture_pair(filename):
     return [
         arcade.load_texture(filename),
-        arcade.load_texture(filename, flipped_horizontally=True)
+        arcade.load_texture(filename, flipped_horizontally=True),
     ]
 
 
@@ -108,7 +108,9 @@ class PlayerCharacter(arcade.Sprite):
         self.cur_texture += 1
         if self.cur_texture > 4 * UPDATES_PER_FRAME:
             self.cur_texture = 0
-        self.texture = self.walk_textures[self.cur_texture // UPDATES_PER_FRAME][self.character_face_direction]
+        self.texture = self.walk_textures[self.cur_texture // UPDATES_PER_FRAME][
+            self.character_face_direction
+        ]
 
 
 class SpiderIsland(arcade.View):
@@ -196,21 +198,32 @@ class SpiderIsland(arcade.View):
         # Read in the tiled map
         my_map = arcade.tilemap.read_tmx(map_name)
 
-        self.wall_list = arcade.tilemap.process_layer(map_object=my_map,
-                                                      layer_name=platforms_layer_name,
-                                                      scaling=TILE_SCALING,
-                                                      use_spatial_hash=True)
+        self.wall_list = arcade.tilemap.process_layer(
+            map_object=my_map,
+            layer_name=platforms_layer_name,
+            scaling=TILE_SCALING,
+            use_spatial_hash=True,
+        )
 
-        self.coin_list = arcade.tilemap.process_layer(my_map, coins_layer_name, TILE_SCALING, use_spatial_hash=True)
-        self.spider_list = arcade.tilemap.process_layer(my_map, spiders_layer_name, TILE_SCALING)
-        self.ladder_list = arcade.tilemap.process_layer(my_map, ladders_layer_name, TILE_SCALING, use_spatial_hash=True)
-        self.ladder_list = arcade.tilemap.process_layer(my_map, ladders_layer_name, TILE_SCALING, use_spatial_hash=True)
-        self.water_list = arcade.tilemap.process_layer(my_map, water_layer_name, TILE_SCALING, use_spatial_hash=True)
+        self.coin_list = arcade.tilemap.process_layer(
+            my_map, coins_layer_name, TILE_SCALING, use_spatial_hash=True
+        )
+        self.spider_list = arcade.tilemap.process_layer(
+            my_map, spiders_layer_name, TILE_SCALING
+        )
+        self.ladder_list = arcade.tilemap.process_layer(
+            my_map, ladders_layer_name, TILE_SCALING, use_spatial_hash=True
+        )
+        self.ladder_list = arcade.tilemap.process_layer(
+            my_map, ladders_layer_name, TILE_SCALING, use_spatial_hash=True
+        )
+        self.water_list = arcade.tilemap.process_layer(
+            my_map, water_layer_name, TILE_SCALING, use_spatial_hash=True
+        )
 
-        self.engine = arcade.PhysicsEnginePlatformer(self.player_sprite,
-                                                     self.wall_list,
-                                                     GRAVITY,
-                                                     ladders=self.ladder_list)
+        self.engine = arcade.PhysicsEnginePlatformer(
+            self.player_sprite, self.wall_list, GRAVITY, ladders=self.ladder_list
+        )
         self.spider_engines = []
         for spider in self.spider_list:
             engine = arcade.PhysicsEnginePlatformer(spider, self.wall_list, GRAVITY)
@@ -238,7 +251,9 @@ class SpiderIsland(arcade.View):
         for engine in self.spider_engines:
             engine.update()
 
-        water_hit_list = arcade.check_for_collision_with_list(self.player_sprite, self.water_list)
+        water_hit_list = arcade.check_for_collision_with_list(
+            self.player_sprite, self.water_list
+        )
         global PLAYER_MOVEMENT_SPEED, BULLET_SPEED, PLAYER_JUMP_SPEED
 
         if len(water_hit_list) > 0:
@@ -272,12 +287,19 @@ class SpiderIsland(arcade.View):
                     spider.change_x = math.cos(angle) * SPIDER_SPEED
                     spider.change_y = math.sin(angle) * SPIDER_SPEED
 
-            if spider.bottom > self.window.width or spider.top < 0 or spider.right < 0 or spider.left > self.window.width:
+            if (
+                spider.bottom > self.window.width
+                or spider.top < 0
+                or spider.right < 0
+                or spider.left > self.window.width
+            ):
                 spider.remove_from_sprite_lists()
             elif len(arcade.check_for_collision_with_list(spider, self.water_list)):
                 spider.remove_from_sprite_lists()
 
-        coin_hit_list = arcade.check_for_collision_with_list(self.player_sprite, self.coin_list)
+        coin_hit_list = arcade.check_for_collision_with_list(
+            self.player_sprite, self.coin_list
+        )
 
         for coin in coin_hit_list:
             self.score += 1
@@ -287,7 +309,9 @@ class SpiderIsland(arcade.View):
 
         for bullet in self.bullet_list:
             # Get bullet collisions
-            bullet_hit_list = arcade.check_for_collision_with_list(bullet, self.spider_list)
+            bullet_hit_list = arcade.check_for_collision_with_list(
+                bullet, self.spider_list
+            )
             wall_hit_list = arcade.check_for_collision_with_list(bullet, self.wall_list)
             coin_hit_list = arcade.check_for_collision_with_list(bullet, self.coin_list)
 
@@ -309,16 +333,26 @@ class SpiderIsland(arcade.View):
                 self.score += 1
 
             # If bullet flies offscreen, remove it
-            if bullet.bottom > self.window.width or bullet.top < 0 or bullet.right < 0 or bullet.left > self.window.width:
+            if (
+                bullet.bottom > self.window.width
+                or bullet.top < 0
+                or bullet.right < 0
+                or bullet.left > self.window.width
+            ):
                 bullet.remove_from_sprite_lists()
 
-        if self.player_sprite.bottom > self.window.width or self.player_sprite.top < 0 or self.player_sprite.right < 0 or (
-                self.player_sprite.left > self.window.width
+        if (
+            self.player_sprite.bottom > self.window.width
+            or self.player_sprite.top < 0
+            or self.player_sprite.right < 0
+            or (self.player_sprite.left > self.window.width)
         ):
             view = GameOverScreen()
             self.window.show_view(view)
 
-        spider_hit_list = arcade.check_for_collision_with_list(self.player_sprite, self.spider_list)
+        spider_hit_list = arcade.check_for_collision_with_list(
+            self.player_sprite, self.spider_list
+        )
 
         if len(spider_hit_list) > 0:
             view = GameOverScreen()
@@ -412,13 +446,13 @@ class SpiderIsland(arcade.View):
 
 def follow_sprite(self, player_sprite):
     """
-        This function will move the current sprite towards whatever
-        other sprite is specified as a parameter.
+    This function will move the current sprite towards whatever
+    other sprite is specified as a parameter.
 
-        We use the 'min' function here to get the sprite to line up with
-        the target sprite, and not jump around if the sprite is not off
-        an exact multiple of SPRITE_SPEED.
-        """
+    We use the 'min' function here to get the sprite to line up with
+    the target sprite, and not jump around if the sprite is not off
+    an exact multiple of SPRITE_SPEED.
+    """
 
     self.center_x += self.change_x
     self.center_y += self.change_y
@@ -441,7 +475,9 @@ def follow_sprite(self, player_sprite):
         angle = math.atan2(y_diff, x_diff)
 
         if x_diff > 0:
-            self.texture = arcade.load_texture("assets/spider.png", flipped_horizontally=True)
+            self.texture = arcade.load_texture(
+                "assets/spider.png", flipped_horizontally=True
+            )
         else:
             self.texture = arcade.load_texture("assets/spider.png")
 
@@ -457,14 +493,13 @@ def get_tip():
         "Bullets are an excellent way to get coins!",
         "Use your mouse to shoot at enemies and coins!",
         "You move slower in water!",
-        "Spiders can't climb ladders!"
+        "Spiders can't climb ladders!",
     ]
     return random.choice(tips)
 
 
 class StartScreen(arcade.View):
-    def __init__(self,
-                 window: arcade.Window = None):
+    def __init__(self, window: arcade.Window = None):
         super().__init__(window)
         self.tip = get_tip()
 
@@ -473,9 +508,30 @@ class StartScreen(arcade.View):
 
     def on_draw(self):
         arcade.start_render()
-        arcade.draw_text("Spider Island", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, arcade.color.WHITE, font_size=50, anchor_x="center")
-        arcade.draw_text("Click to start", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-75, arcade.color.WHITE, font_size=20, anchor_x="center")
-        arcade.draw_text(f"TIP: {self.tip}", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 100, arcade.color.WHITE, font_size=15, anchor_x="center")
+        arcade.draw_text(
+            "Spider Island",
+            SCREEN_WIDTH / 2,
+            SCREEN_HEIGHT / 2,
+            arcade.color.WHITE,
+            font_size=50,
+            anchor_x="center",
+        )
+        arcade.draw_text(
+            "Click to start",
+            SCREEN_WIDTH / 2,
+            SCREEN_HEIGHT / 2 - 75,
+            arcade.color.WHITE,
+            font_size=20,
+            anchor_x="center",
+        )
+        arcade.draw_text(
+            f"TIP: {self.tip}",
+            SCREEN_WIDTH / 2,
+            SCREEN_HEIGHT / 2 - 100,
+            arcade.color.WHITE,
+            font_size=15,
+            anchor_x="center",
+        )
 
     def on_mouse_press(self, x: float, y: float, button: int, modifiers: int):
         view = InstructionScreen()
@@ -488,8 +544,22 @@ class GameOverScreen(arcade.View):
 
     def on_draw(self):
         arcade.start_render()
-        arcade.draw_text("You died!", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, arcade.color.WHITE, font_size=50, anchor_x="center")
-        arcade.draw_text("Click to restart", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-75, arcade.color.WHITE, font_size=20, anchor_x="center")
+        arcade.draw_text(
+            "You died!",
+            SCREEN_WIDTH / 2,
+            SCREEN_HEIGHT / 2,
+            arcade.color.WHITE,
+            font_size=50,
+            anchor_x="center",
+        )
+        arcade.draw_text(
+            "Click to restart",
+            SCREEN_WIDTH / 2,
+            SCREEN_HEIGHT / 2 - 75,
+            arcade.color.WHITE,
+            font_size=20,
+            anchor_x="center",
+        )
 
     def on_mouse_press(self, x: float, y: float, button: int, modifiers: int):
         game_view = SpiderIsland()
@@ -503,9 +573,30 @@ class WinScreen(arcade.View):
 
     def on_draw(self):
         arcade.start_render()
-        arcade.draw_text("Congratulations!", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, arcade.color.WHITE, font_size=50, anchor_x="center")
-        arcade.draw_text("You killed all the spiders and made it to the rescue boat.", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-75, arcade.color.WHITE, font_size=20, anchor_x="center")
-        arcade.draw_text("Click to restart.", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-100, arcade.color.WHITE, font_size=15, anchor_x="center")
+        arcade.draw_text(
+            "Congratulations!",
+            SCREEN_WIDTH / 2,
+            SCREEN_HEIGHT / 2,
+            arcade.color.WHITE,
+            font_size=50,
+            anchor_x="center",
+        )
+        arcade.draw_text(
+            "You killed all the spiders and made it to the rescue boat.",
+            SCREEN_WIDTH / 2,
+            SCREEN_HEIGHT / 2 - 75,
+            arcade.color.WHITE,
+            font_size=20,
+            anchor_x="center",
+        )
+        arcade.draw_text(
+            "Click to restart.",
+            SCREEN_WIDTH / 2,
+            SCREEN_HEIGHT / 2 - 100,
+            arcade.color.WHITE,
+            font_size=15,
+            anchor_x="center",
+        )
 
     def on_mouse_press(self, x: float, y: float, button: int, modifiers: int):
         game_view = SpiderIsland()
@@ -519,9 +610,38 @@ class InstructionScreen(arcade.View):
 
     def on_draw(self):
         arcade.start_render()
-        arcade.draw_text("Instructions", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, arcade.color.WHITE, font_size=50, anchor_x="center")
-        arcade.draw_text("Use your mouse to aim and click to shoot a bullet!", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-75, arcade.color.WHITE, font_size=20, anchor_x="center")
-        arcade.draw_text("Kill the spiders and collect the rubies.", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-100, arcade.color.WHITE, font_size=15, anchor_x="center")
+        arcade.draw_text(
+            "Instructions",
+            SCREEN_WIDTH / 2,
+            SCREEN_HEIGHT / 2,
+            arcade.color.WHITE,
+            font_size=50,
+            anchor_x="center",
+        )
+        arcade.draw_text(
+            "Use your mouse to aim and click to shoot a bullet!",
+            SCREEN_WIDTH / 2,
+            SCREEN_HEIGHT / 2 - 75,
+            arcade.color.WHITE,
+            font_size=20,
+            anchor_x="center",
+        )
+        arcade.draw_text(
+            "Kill the spiders and collect the rubies.",
+            SCREEN_WIDTH / 2,
+            SCREEN_HEIGHT / 2 - 100,
+            arcade.color.WHITE,
+            font_size=15,
+            anchor_x="center",
+        )
+        arcade.draw_text(
+            "Click to start",
+            SCREEN_WIDTH / 2,
+            SCREEN_HEIGHT / 2 - 125,
+            arcade.color.WHITE,
+            font_size=10,
+            anchor_x="center",
+        )
 
     def on_mouse_press(self, x: float, y: float, button: int, modifiers: int):
         game_view = SpiderIsland()
@@ -537,5 +657,5 @@ def main():
     arcade.run()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
