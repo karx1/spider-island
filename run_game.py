@@ -491,8 +491,7 @@ def follow_sprite(self, player_sprite):
 def get_tip():
     tips = [
         "Spiders hate water!",
-        "Bullets are an excellent way to get coins!",
-        "Use your mouse to shoot at enemies and coins!",
+        "Bullets are an excellent way to get rubies!",
         "You move slower in water!",
         "Spiders can't climb ladders!",
     ]
