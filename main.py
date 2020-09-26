@@ -245,10 +245,12 @@ class SpiderIsland(arcade.View):
             PLAYER_MOVEMENT_SPEED = WATER_SPEED
             BULLET_SPEED = WATER_BULLET_SPEED
             PLAYER_JUMP_SPEED = WATER_JUMP_SPEED
+            self.engine.gravity_constant = GRAVITY / 5
         else:
             PLAYER_MOVEMENT_SPEED = NORMAL_SPEED
             BULLET_SPEED = NORMAL_BULLET_SPEED
             PLAYER_JUMP_SPEED = NORMAL_JUMP_SPEED
+            self.engine.gravity_constant = GRAVITY
 
         for spider in self.spider_list:
             follow_sprite(spider, self.player_sprite)
