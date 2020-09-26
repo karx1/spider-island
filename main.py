@@ -68,20 +68,11 @@ class PlayerCharacter(arcade.Sprite):
         self.scale = PLAYER_SCALING
         self.texture = arcade.load_texture("assets/player_idle.png")
 
-        # Adjust the collision box. Default includes too much empty space
-        # side-to-side. Box is centered at sprite center, (0, 0)
+        # Adjust the collision box.
         self.points = self.get_adjusted_hit_box()
 
-        # --- Load Textures ---
-
-        # Images from Kenney.nl's Asset Pack 3
+        # Load textures
         main_path = "assets/player"
-        # main_path = ":resources:images/animated_characters/female_person/femalePerson"
-        # main_path = ":resources:images/animated_characters/male_person/malePerson"
-        # main_path = ":resources:images/animated_characters/male_adventurer/maleAdventurer"
-        # main_path = ":resources:images/animated_characters/zombie/zombie"
-        # main_path = ":resources:images/animated_characters/robot/robot"
-
         # Load textures for idle standing
         self.idle_texture_pair = load_texture_pair(f"{main_path}_idle.png")
 
@@ -143,6 +134,11 @@ class SpiderIsland(arcade.View):
         self.score_text = None
 
         self.level = 1
+
+        self.bullet_sound = arcade.load_sound("sounds/laser.wav")
+        self.coin_sound = arcade.load_sound("sounds/coin.wav")
+        self.level_sound = arcade.load_sound("sounds/level.wav")
+        self.jump_sound = arcade.load_sound("sounds/jump.wav")
 
     def setup(self, level, score=None):
         self.score = score or 0
@@ -304,6 +300,7 @@ class SpiderIsland(arcade.View):
         for coin in coin_hit_list:
             self.score += 1
             coin.remove_from_sprite_lists()
+            arcade.play_sound(self.coin_sound, volume=0.25)
 
         self.bullet_list.update()
 
@@ -331,6 +328,7 @@ class SpiderIsland(arcade.View):
             for coin in coin_hit_list:
                 coin.remove_from_sprite_lists()
                 self.score += 1
+                arcade.play_sound(self.coin_sound, volume=0.25)
 
             # If bullet flies offscreen, remove it
             if (
@@ -359,6 +357,7 @@ class SpiderIsland(arcade.View):
             self.window.show_view(view)
 
         if len(self.spider_list) == 0 and len(self.coin_list) == 0:
+            arcade.play_sound(self.level_sound, volume=0.25)
             self.level += 1
             self.setup(self.level, self.score)
 
@@ -373,6 +372,7 @@ class SpiderIsland(arcade.View):
             elif self.engine.can_jump() and not self.jump_needs_reset:
                 self.player_sprite.change_y = PLAYER_JUMP_SPEED
                 self.jump_needs_reset = True
+                arcade.play_sound(self.jump_sound)
         elif self.down_pressed and not self.up_pressed:
             if self.engine.is_on_ladder():
                 self.player_sprite.change_y = -PLAYER_MOVEMENT_SPEED
@@ -442,6 +442,7 @@ class SpiderIsland(arcade.View):
         bullet.change_y = math.sin(angle) * BULLET_SPEED
 
         self.bullet_list.append(bullet)
+        arcade.play_sound(self.bullet_sound)
 
 
 def follow_sprite(self, player_sprite):
@@ -502,9 +503,11 @@ class StartScreen(arcade.View):
     def __init__(self, window: arcade.Window = None):
         super().__init__(window)
         self.tip = get_tip()
+        self.song = arcade.load_sound("sounds/opening.wav")
 
     def on_show(self):
         arcade.set_background_color(arcade.csscolor.CORNFLOWER_BLUE)
+        self.song.play(volume=0.25)
 
     def on_draw(self):
         arcade.start_render()
@@ -532,8 +535,11 @@ class StartScreen(arcade.View):
             font_size=15,
             anchor_x="center",
         )
+        if self.song.is_complete():
+            self.song.play(volume=0.25)
 
     def on_mouse_press(self, x: float, y: float, button: int, modifiers: int):
+        self.song.stop()
         view = InstructionScreen()
         self.window.show_view(view)
 
